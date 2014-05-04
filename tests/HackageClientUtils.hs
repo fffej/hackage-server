@@ -94,26 +94,39 @@ runServer root args = run server args'
   Access to individual Hackage features
 ------------------------------------------------------------------------------}
 
-type User  = String
-data Group = Group { groupMembers     :: [User]
+data Group = Group { groupMembers     :: [String]
                    , groupTitle       :: String
                    , groupDescription :: String
                    }
   deriving Show
+
+data User = User { username :: String
+                 , userid :: Int
+                 }
+  deriving Show
+
+instance FromJSON User where
+  parseJSON (Object obj) = do
+    uname <- obj .: "username"
+    uid   <- obj .: "userid"
+    return User { username = uname
+                , userid = uid
+                }
+  parseJSON _ = fail "Expected object"
 
 instance FromJSON Group where
   parseJSON (Object obj) = do
     members <- obj .: "members"
     title   <- obj .: "title"
     descr   <- obj .: "description"
-    return Group { groupMembers     = members
+    return Group { groupMembers     = map username members
                  , groupTitle       = title
                  , groupDescription = descr
                  }
   parseJSON _ = fail "Expected object"
 
 getUsers :: IO [User]
-getUsers = getJSONStrings "/users/.json"
+getUsers = getUrl NoAuth "/users/.json" >>= decodeJSON
 
 getAdmins :: IO Group
 getAdmins = getGroup "/users/admins/.json"
@@ -121,7 +134,7 @@ getAdmins = getGroup "/users/admins/.json"
 getGroup :: String -> IO Group
 getGroup url = getUrl NoAuth url >>= decodeJSON
 
-createUserDirect :: Authorization -> User -> String -> IO ()
+createUserDirect :: Authorization -> String -> String -> IO ()
 createUserDirect auth user pass = do
   info $ "Creating user " ++ user
   post auth "/users/" [
@@ -130,12 +143,12 @@ createUserDirect auth user pass = do
     , ("repeat-password", pass)
     ]
 
-createUserSelfRegister :: User -> String -> String -> IO ()
+createUserSelfRegister :: String -> String -> String -> IO ()
 createUserSelfRegister user real email = do
   info $ "Requesting registration for user " ++ real
       ++ " with email address " ++ testEmailAddress email
   post NoAuth "/users/register-request" [
-      ("username", user)
+      ("username", show user)
     , ("realname", real)
     , ("email",    testEmailAddress email)
     ]

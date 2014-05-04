@@ -88,7 +88,7 @@ runUserTests :: IO ()
 runUserTests = do
     do info "Getting user list"
        xs <- getUsers
-       unless (xs == ["admin"]) $
+       unless (map username xs == ["admin"]) $
            die ("Bad user list: " ++ show xs)
     do info "Getting admin user list"
        xs <- getAdmins
@@ -100,7 +100,7 @@ runUserTests = do
        createUserDirect (Auth "admin" "admin") "HackageTestUser2" "testpass2"
     do info "Checking new users are now in user list"
        xs <- getUsers
-       unless (xs == ["admin","HackageTestUser1","HackageTestUser2"]) $
+       unless (map username xs == ["admin","HackageTestUser1","HackageTestUser2"]) $
            die ("Bad user list: " ++ show xs)
     do info "Checking new users are not in admin list"
        xs <- getAdmins
@@ -128,12 +128,12 @@ runUserTests = do
     do info "Trying to delete HackageTestUser2 as HackageTestUser2"
        delete isForbidden (Auth "HackageTestUser2" "newtestpass2") "/user/HackageTestUser2"
        xs <- getUsers
-       unless (xs == ["admin","HackageTestUser1","HackageTestUser2"]) $
+       unless (map username xs == ["admin","HackageTestUser1","HackageTestUser2"]) $
            die ("Bad user list: " ++ show xs)
     do info "Deleting HackageTestUser2 as admin"
        delete isOk (Auth "admin" "admin") "/user/HackageTestUser2"
        xs <- getUsers
-       unless (xs == ["admin","HackageTestUser1"]) $
+       unless (map username xs == ["admin","HackageTestUser1"]) $
            die ("Bad user list: " ++ show xs)
     do info "Getting user info for HackageTestUser1"
        xs <- validate NoAuth "/user/HackageTestUser1"
