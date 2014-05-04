@@ -26,6 +26,7 @@ import System.IO
 import Package
 import Util
 import HttpUtils ( isOk
+                 , isNoContent
                  , isForbidden
                  , Authorization(..)
                  )
@@ -131,7 +132,8 @@ runUserTests = do
        unless (map username xs == ["admin","HackageTestUser1","HackageTestUser2"]) $
            die ("Bad user list: " ++ show xs)
     do info "Deleting HackageTestUser2 as admin"
-       delete isOk (Auth "admin" "admin") "/user/HackageTestUser2"
+       print "wait for me"
+       delete isNoContent (Auth "admin" "admin") "/user/HackageTestUser2"
        xs <- getUsers
        unless (map username xs == ["admin","HackageTestUser1"]) $
            die ("Bad user list: " ++ show xs)
